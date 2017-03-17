@@ -1,0 +1,5 @@
+---
+# defaults file for re-giot
+vm: nodejs
+oldFile: old
+newFile: 20170120

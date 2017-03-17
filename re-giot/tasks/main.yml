@@ -1,0 +1,70 @@
+---
+# tasks file for re-giot
+ - name: Copy and extract server file
+   unarchive: src=glnweb-{{newFile}}.tar.xz dest=~/
+
+ - name: Copy tools file
+   copy: remote_src=True src=~/glnweb-{{oldFile}}/tools/{{item}}.json dest=~/glnweb-{{newFile}}/tools/
+   with_items: [config, client, token]
+
+ - name: Get credentials file
+   shell: ls ~/glnweb-{{oldFile}}/credentials/
+   register: caFile
+ 
+ - name: Copy gln-web file
+   copy: remote_src=True src=~/glnweb-{{oldFile}}/credentials/{{item}} dest=~/glnweb-{{newFile}}/credentials/
+   with_items: "{{caFile.stdout_lines}}"
+
+# - name: Copy https credentials file
+#   copy: remote_src=True directory_mode=True src=~/glnweb-{{oldFile}}/credentials/ dest=~/glnweb-{{newFile}}/credentials/
+#   copy: remote_src=True directory_mode=True src=~/glnweb-{{oldFile}}/{{item}} dest=~/glnweb-{{newFile}}/credentials/
+#   with_fileglob: 
+#     - credentials/*
+#   command: cp -r ~/glnweb-{{oldFile}}/credentials/* ~/glnweb-{{newFile}}/credentials/
+#   shell: cp -r ~/glnweb-old/credentials/* ~/glnweb-20170120/credentials/
+
+ - name: Copy gln-web file
+   shell: cp -r ~/glnweb-old/public/* ~/glnweb-{{newFile}}/public/
+
+ - name: Config server setting
+   shell: cd ~/glnweb-{{newFile}}/tools/; node config.js
+   register: result
+
+ - name: Check config success
+   fail: msg="Fail to config server setting"
+   when: result.stdout != "Complete"
+
+ - name: Remove old link file
+   file:
+    path: ~/glnweb
+    state: absent
+
+# - name: Create new link file
+   #command: ln -s aaa glnweb
+   #command: ln -s tmp glnweb
+   #command: ln -s ginweb-{{newFile}}/ glnweb
+#   file:
+       #src: tmp
+       #src: aaa
+       #src: glnweb-20170120
+#       src: glnweb-{{newFile}}
+#       path: glnweb
+#       state: link
+
+
+# - name: Create new link file
+#   command: ln -s ginweb-{{newFile}}/ glnweb
+
+
+# - name: Update link file
+ - block:
+    - file:
+       src: glnweb-{{newFile}}
+       path: glnweb
+       state: link
+      notify: Restart service
+   rescue:
+    - file:
+       src: glnweb-{{oldFile}}
+       path: glnweb
+       state: link

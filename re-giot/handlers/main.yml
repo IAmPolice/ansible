@@ -1,0 +1,8 @@
+---
+# handlers file for re-giot
+ - name: Restart service
+   become: yes
+   service:
+     name: rabbitmq-server
+     # name: mongodb
+     state: restarted 
